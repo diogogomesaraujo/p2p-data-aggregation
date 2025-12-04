@@ -1,0 +1,15 @@
+syntax = "proto3";
+package peer;
+
+message PeerConnectionRequest {
+    int32 index = 1;
+}
+
+message Value {
+    int32 v = 1;
+}
+
+service PeerService {
+    rpc ConnectToServer (PeerConnectionRequest) returns (stream Value);
+    rpc ExchangeValue (Value) returns (Value);
+}
