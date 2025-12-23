@@ -4,10 +4,10 @@ package peer;
 message PeerConnectionRequest {}
 
 message Value {
-    int32 v = 1;
+  float v = 1;
 }
 
 service PeerService {
-    rpc ConnectToServer (PeerConnectionRequest) returns (stream Value);
-    rpc ExchangeValue (Value) returns (Value);
+  rpc ConnectToServer(PeerConnectionRequest) returns (stream Value);
+  rpc ExchangeValue(Value) returns (Value);
 }

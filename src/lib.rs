@@ -1,4 +1,4 @@
 pub mod peer;
 pub mod poisson;
 
-use poisson::*;
+const RATE: f64 = 1.;
