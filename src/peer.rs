@@ -1,7 +1,7 @@
 use crate::{
     RATE, log,
     peer::pb::{
-        ConnectionRequest, ValueRequest, ValueResponse,
+        ValueRequest, ValueResponse,
         peer_service_client::PeerServiceClient,
         peer_service_server::{PeerService, PeerServiceServer},
     },
@@ -10,15 +10,13 @@ use crate::{
 use color_print::cformat;
 use rand::{Rng, RngCore, rng};
 use std::{
-    collections::HashMap, error::Error, net::SocketAddr, pin::Pin, str::FromStr, sync::Arc,
-    time::Duration,
+    collections::HashMap, error::Error, net::SocketAddr, str::FromStr, sync::Arc, time::Duration,
 };
 use tokio::{
     sync::{Mutex, RwLock, mpsc},
     time::sleep,
 };
-use tokio_stream::Stream;
-use tonic::{Request, Response, Status, Streaming, transport::Server};
+use tonic::{Request, Response, Status, transport::Server};
 
 pub mod pb {
     tonic::include_proto!("peer");
@@ -75,7 +73,6 @@ impl PeerState {
                 true => peer_address.clone(),
                 false => format!("http://{}", peer_address),
             };
-            let address = self.address.clone();
 
             tokio::spawn(async move {
                 let mut client = match PeerServiceClient::connect(peer_address.clone()).await {
@@ -88,22 +85,6 @@ impl PeerState {
                         return;
                     }
                 };
-
-                let request = tonic::Request::new(ConnectionRequest {
-                    address: address.clone(),
-                });
-                let mut _stream: Streaming<ValueResponse> =
-                    match client.connect_to_peer(request).await {
-                        Ok(s) => s,
-                        Err(_) => {
-                            log::info(&cformat!(
-                                "Couldn't initialize stream with {}.",
-                                peer_address
-                            ));
-                            return;
-                        }
-                    }
-                    .into_inner();
 
                 let (tx, mut rx) = mpsc::channel(1);
                 {
@@ -185,63 +166,6 @@ impl PeerState {
 
 #[tonic::async_trait]
 impl PeerService for PeerState {
-    type ConnectToPeerStream =
-        Pin<Box<dyn Stream<Item = Result<ValueResponse, Status>> + Send + Sync + 'static>>;
-
-    async fn connect_to_peer(
-        &self,
-        connection_request: Request<ConnectionRequest>,
-    ) -> Result<Response<Self::ConnectToPeerStream>, Status> {
-        let connection_request = connection_request.into_inner();
-
-        let (stream_tx, stream_rx) = mpsc::channel(1);
-        let (tx, mut rx) = mpsc::channel(1);
-
-        {
-            self.connections
-                .write()
-                .await
-                .peers
-                .insert(connection_request.address.clone(), tx);
-        }
-
-        log::info(&cformat!(
-            "<bold>{}</bold> successfully connected.",
-            connection_request.address,
-        ));
-
-        {
-            let shared_connections = self.connections.clone();
-
-            tokio::spawn(async move {
-                while let Some(val) = rx.recv().await {
-                    match stream_tx
-                        .send(Ok(ValueResponse { value: val as f32 }))
-                        .await
-                    {
-                        Ok(_) => {}
-                        Err(_) => {
-                            log::warning(&cformat!(
-                                "<bold>{}</bold> has disconnected.",
-                                connection_request.address,
-                            ));
-
-                            shared_connections
-                                .write()
-                                .await
-                                .peers
-                                .remove(&connection_request.address);
-                        }
-                    }
-                }
-            });
-        }
-
-        Ok(Response::new(Box::pin(
-            tokio_stream::wrappers::ReceiverStream::new(stream_rx),
-        )))
-    }
-
     async fn send_value_request(
         &self,
         request: Request<ValueRequest>,
