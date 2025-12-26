@@ -92,7 +92,7 @@ impl PeerState {
                 let request = tonic::Request::new(ConnectionRequest {
                     address: address.clone(),
                 });
-                let mut stream: Streaming<ValueResponse> =
+                let mut _stream: Streaming<ValueResponse> =
                     match client.connect_to_peer(request).await {
                         Ok(s) => s,
                         Err(_) => {
