@@ -1,13 +1,19 @@
 syntax = "proto3";
 package peer;
 
-message PeerConnectionRequest {}
+message ValueRequest {
+  float value = 1;
+}
 
-message Value {
-    int32 v = 1;
+message ValueResponse {
+  float value = 1;
+}
+
+message ConnectionRequest {
+  string address = 1;
 }
 
 service PeerService {
-    rpc ConnectToServer (PeerConnectionRequest) returns (stream Value);
-    rpc ExchangeValue (Value) returns (Value);
+  rpc ConnectToPeer(ConnectionRequest) returns (stream ValueResponse);
+  rpc SendValueRequest(ValueRequest) returns (ValueResponse);
 }

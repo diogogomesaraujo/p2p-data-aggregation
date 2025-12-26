@@ -1,4 +1,5 @@
+pub mod log;
 pub mod peer;
 pub mod poisson;
 
-use poisson::*;
+pub const RATE: f32 = 5.;
