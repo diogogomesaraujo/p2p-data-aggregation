@@ -116,10 +116,10 @@ impl PeerState {
                             let request = Request::new(ValueRequest { value: val });
                             match client.send_value_request(request).await {
                                 Ok(response) => {
-                                    let peer_old_value = response.into_inner().value;
+                                    let peer_value = response.into_inner().value;
                                     let mut own_value = value.lock().await;
-                                    *own_value = (*own_value + peer_old_value) / 2.;
-                                    log::info(&cformat!("Updated value to <bold>{}</bold>", *own_value));
+                                    *own_value = (*own_value + peer_value) / 2.;
+                                    log::info(&cformat!("Updated value to <bold>{}</bold>.", *own_value));
                                 }
                                 Err(_) => {
                                     log::error("Failed to send message to server.");
