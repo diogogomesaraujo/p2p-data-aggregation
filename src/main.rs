@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let state = PeerState::new(args.value, &args.address);
 
-    state.run(&args.peers_addresses).await?;
-
-    Ok(())
+    loop {
+        state.run(&args.peers_addresses).await?;
+    }
 }
