@@ -1,5 +1,5 @@
 use crate::{
-    RATE, log,
+    RATE, WAIT_TIME, log,
     peer::pb::{
         ValueRequest, ValueResponse,
         peer_service_client::PeerServiceClient,
@@ -10,7 +10,8 @@ use crate::{
 use color_print::cformat;
 use rand::{Rng, RngCore, rng};
 use std::{
-    collections::HashMap, error::Error, net::SocketAddr, str::FromStr, sync::Arc, time::Duration,
+    collections::HashMap, error::Error, net::SocketAddr, process::exit, str::FromStr, sync::Arc,
+    time::Duration,
 };
 use tokio::{
     sync::{Mutex, RwLock, mpsc},
@@ -53,14 +54,16 @@ impl Connections {
 pub struct PeerState {
     pub address: String,
     pub value: Arc<Mutex<f32>>,
+    pub goal: f32,
     pub connections: Arc<RwLock<Connections>>,
 }
 
 impl PeerState {
-    pub fn new(own_value: f32, own_address: &str) -> Self {
+    pub fn new(own_value: f32, own_address: &str, number_of_peers: u32) -> Self {
         Self {
             address: own_address.to_string(),
             value: Arc::new(Mutex::new(own_value)),
+            goal: 1. / number_of_peers as f32,
             connections: Arc::new(RwLock::new(Connections::new())),
         }
     }
@@ -73,38 +76,49 @@ impl PeerState {
                 true => peer_address.clone(),
                 false => format!("http://{}", peer_address),
             };
+            let goal = self.goal.clone();
 
             tokio::spawn(async move {
-                let mut client = match PeerServiceClient::connect(peer_address.clone()).await {
-                    Ok(client) => client,
-                    Err(e) => {
-                        log::error(&cformat!(
-                            "Couldn't connect to <bold>{}</bold>. - {e}",
-                            peer_address
-                        ));
-                        return;
+                let mut reconnect = true;
+
+                while reconnect == true {
+                    sleep(WAIT_TIME).await;
+
+                    let peer_address = peer_address.clone();
+                    let mut client = match PeerServiceClient::connect(peer_address.clone()).await {
+                        Ok(client) => client,
+                        Err(e) => {
+                            log::error(&cformat!(
+                                "Couldn't connect to <bold>{}</bold>. - {e}",
+                                peer_address
+                            ));
+                            continue;
+                        }
+                    };
+
+                    reconnect = false;
+
+                    let (tx, mut rx) = mpsc::channel(1);
+                    {
+                        connections.write().await.peers.insert(peer_address, tx);
                     }
-                };
 
-                let (tx, mut rx) = mpsc::channel(1);
-                {
-                    connections.write().await.peers.insert(peer_address, tx);
-                }
+                    loop {
+                        tokio::select! {
+                            Some(val) = rx.recv() => {
+                                let request = Request::new(ValueRequest { value: val });
+                                match client.send_value_request(request).await {
+                                    Ok(response) => {
+                                        let peer_value = response.into_inner().value;
+                                        let mut own_value = value.lock().await;
+                                        *own_value = (*own_value + peer_value) / 2.;
 
-                loop {
-                    tokio::select! {
-                        Some(val) = rx.recv() => {
-                            let request = Request::new(ValueRequest { value: val });
-                            match client.send_value_request(request).await {
-                                Ok(response) => {
-                                    let peer_value = response.into_inner().value;
-                                    let mut own_value = value.lock().await;
-                                    *own_value = (*own_value + peer_value) / 2.;
-                                    log::info(&cformat!("Updated value to <bold>{}</bold>.", *own_value));
-                                }
-                                Err(_) => {
-                                    log::error("Failed to send message to server.");
-                                    return;
+                                        log::info(&cformat!("Updated value to <bold>{}</bold>.", *own_value));
+                                    }
+                                    Err(_) => {
+                                        // log::error("Failed to send message to server.");
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -144,10 +158,10 @@ impl PeerState {
                         }
 
                         let i = poisson_process.rng.random_range(0..len);
-                        let (peer_address, tx) = &peers_vec[i];
+                        let (_peer_address, tx) = &peers_vec[i];
 
                         if let Err(_) = tx.send(*value.lock().await).await {
-                            log::error(&cformat!("Couldn't send work to {}.", peer_address));
+                            // log::error(&cformat!("Couldn't send work to {}.", peer_address));
                             return;
                         }
                     }
