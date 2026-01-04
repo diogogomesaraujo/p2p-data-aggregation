@@ -1,10 +1,27 @@
-FROM rust:latest as builder
-RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
+FROM rust:1.92-slim as builder
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends protobuf-compiler && \
+    rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY . .
-RUN cargo build --release
+
+COPY Cargo.toml Cargo.lock ./
+
+COPY build.rs ./
+COPY proto ./proto
+
+RUN mkdir src && \
+    echo "fn main() {}" > src/main.rs && \
+    cargo build --release && \
+    rm -rf src
+
+COPY src ./src
+
+RUN cargo build --release && \
+    strip target/release/data-aggregation
 
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/ /usr/local/bin/
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libssl3 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/target/release/data-aggregation /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/data-aggregation"]

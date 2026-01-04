@@ -1,40 +1,84 @@
 services:
+  peer0:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3000
+    - peer1:3001
+    - peer5:3005
+    networks:
+    - peer-network
+    build: .
   peer1:
-    build: .
-    command: ["1.0", "0.0.0.0:3001", "peer2:3002"]
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3001
     networks:
-      - peer-network
-
-  peer2:
+    - peer-network
     build: .
-    command: ["0.0", "0.0.0.0:3002", "peer1:3001", "peer3:3003", "peer4:3004"]
-    networks:
-      - peer-network
-
-  peer3:
-    build: .
-    command: ["0.0", "0.0.0.0:3003", "peer2:3002"]
-    networks:
-      - peer-network
-
-  peer4:
-    build: .
-    command: ["0.0", "0.0.0.0:3004", "peer2:3002", "peer5:3005", "peer6:3006"]
-    networks:
-      - peer-network
-
   peer5:
-    build: .
-    command: ["0.0", "0.0.0.0:3005", "peer4:3004"]
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3005
+    - peer4:3004
     networks:
-      - peer-network
-
+    - peer-network
+    build: .
+  peer8:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3008
+    - peer3:3003
+    networks:
+    - peer-network
+    build: .
+  peer3:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3003
+    networks:
+    - peer-network
+    build: .
   peer6:
-    build: .
-    command: ["0.0", "0.0.0.0:3006", "peer4:3004"]
+    command:
+    - '1.0'
+    - '9'
+    - 0.0.0.0:3006
+    - peer3:3003
+    - peer5:3005
     networks:
-      - peer-network
-
+    - peer-network
+    build: .
+  peer7:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3007
+    - peer8:3008
+    networks:
+    - peer-network
+    build: .
+  peer4:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3004
+    networks:
+    - peer-network
+    build: .
+  peer2:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3002
+    - peer5:3005
+    networks:
+    - peer-network
+    build: .
 networks:
   peer-network:
     driver: bridge
