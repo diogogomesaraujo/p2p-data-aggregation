@@ -1,11 +1,20 @@
 services:
-  peer0:
+  peer4:
+    command:
+    - '1.0'
+    - '9'
+    - 0.0.0.0:3004
+    - peer2:3002
+    networks:
+    - peer-network
+    build: .
+  peer2:
     command:
     - '0.0'
     - '9'
-    - 0.0.0.0:3000
+    - 0.0.0.0:3002
     - peer1:3001
-    - peer5:3005
+    - peer7:3007
     networks:
     - peer-network
     build: .
@@ -14,6 +23,15 @@ services:
     - '0.0'
     - '9'
     - 0.0.0.0:3001
+    - peer8:3008
+    networks:
+    - peer-network
+    build: .
+  peer7:
+    command:
+    - '0.0'
+    - '9'
+    - 0.0.0.0:3007
     networks:
     - peer-network
     build: .
@@ -22,7 +40,7 @@ services:
     - '0.0'
     - '9'
     - 0.0.0.0:3005
-    - peer4:3004
+    - peer2:3002
     networks:
     - peer-network
     build: .
@@ -43,38 +61,20 @@ services:
     networks:
     - peer-network
     build: .
-  peer6:
-    command:
-    - '1.0'
-    - '9'
-    - 0.0.0.0:3006
-    - peer3:3003
-    - peer5:3005
-    networks:
-    - peer-network
-    build: .
-  peer7:
+  peer0:
     command:
     - '0.0'
     - '9'
-    - 0.0.0.0:3007
+    - 0.0.0.0:3000
     - peer8:3008
     networks:
     - peer-network
     build: .
-  peer4:
+  peer6:
     command:
     - '0.0'
     - '9'
-    - 0.0.0.0:3004
-    networks:
-    - peer-network
-    build: .
-  peer2:
-    command:
-    - '0.0'
-    - '9'
-    - 0.0.0.0:3002
+    - 0.0.0.0:3006
     - peer5:3005
     networks:
     - peer-network
