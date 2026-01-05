@@ -4,7 +4,6 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="./assets/logo.png" alt="What is this" width="150">
   <h3 align="center">p2p-data-aggregation</h3>
   <p align="center">
     Data Aggregation using Anti-Entropy algorithm in a P2P network using gRPC.
@@ -59,7 +58,7 @@ These are some of the tools used to build this project.
 
 ### Prerequisites
 
-In order to run build this application from source you will need to have `cargo`, `protobuf compiler `cargo` and  installed.
+In order to run build this application from source you will need to have `cargo`, `protobuf compiler` `docker` and `python` installed.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -99,16 +98,12 @@ In order to run build this application from source you will need to have `cargo`
 2. Run the following command to execute experiments with random topologies and generate a plot of runtime as a function of total peer count.
    
    ```sh
-   cargo run -- <INITIAL_VALUE> <NUMBER_OF_PEERS> <OWN_ADDRESS> <PEER_ADDRESS> ...
+   python plot.py
    ```
 #### Example
-
-   ```sh
-   # peers
-   cargo run -- 0 3 127.0.0.1:3000
-   cargo run -- 0 3 127.0.0.1:3001 127.0.0.1:3000
-   cargo run -- 1 3 127.0.0.1:3002 127.0.0.1:3000 127.0.0.1:3001
-   ```
+<div align="center">
+   <img src="./convergence_plot.png" alt="Plot">
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
