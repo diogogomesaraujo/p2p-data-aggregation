@@ -82,7 +82,7 @@ In order to run build this application from source you will need to have `cargo`
    ```sh
    cargo run -- <INITIAL_VALUE> <NUMBER_OF_PEERS> <OWN_ADDRESS> <PEER_ADDRESS> ...
    ```
-#### Example
+##### Example
 
    ```sh
    # peers
@@ -100,7 +100,7 @@ In order to run build this application from source you will need to have `cargo`
    ```sh
    python plot.py
    ```
-#### Example
+##### Example
 <div align="center">
    <img src="./convergence_plot.png" alt="Plot">
 </div>
